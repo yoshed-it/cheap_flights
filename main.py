@@ -41,7 +41,7 @@ A_API_SECRET = os.getenv('A_API_SECRET')
 
 SHEETLY_API_ENPOINT = "https://api.sheety.co/f378ff5e745942b1075afca807afb7b8/flightDeals/prices"
 AMADEUS_TOKEN_ENDPOINT = "https://test.api.amadeus.com/v1/security/oauth2/token"
-AMADEUS_GET_IATA_ENDPOINT = "https://test.api.amadeus.com/v1/refrence-data/locations/cities"
+AMADEUS_GET_IATA_ENDPOINT = "https://test.api.amadeus.com/v1/reference-data/locations/cities"
 
 def get_token():
     payload = {
@@ -54,18 +54,33 @@ def get_token():
     data = json.loads(token_response.text)
     return data['access_token']
 
+token =  get_token()
+headers = {"Authorization": "Bearer " + token}
 
-def get_iata_code(): 
+
+def get_city_from_sheet():
+    response = requests.get(SHEETLY_API_ENPOINT)
+    data = json.loads(response.text)
+    for _ in data['prices']:
+        cities = _['city']
+    return cities
+
+def get_iata_code(city): 
     payload= {
-        "keyword" : 'paris'
+        "keyword" : city,
     }
-    city_response = requests.get(f"{AMADEUS_GET_IATA_ENDPOINT}?countryCode=FR&keyword=PARIS&max=10")
+    city_response = requests.get(url=AMADEUS_GET_IATA_ENDPOINT, params=payload, headers=headers)
     city_response.raise_for_status()
-    print(city_response.text)
+    data = json.loads(city_response.text)
+    for _ in data['data']:
+        iata_code =  _['iataCode']
+    return iata_code
 
-token_finder = get_token()
+def update_sheet():
 
-get_iata_code()
+
+bob = get_iata_code(get_city_from_sheet())
+print(bob)
 
 # get_sheetly_shit = requests.get(SHEETLY_API_ENPOINT)
 # get_sheetly_shit.raise_for_status()
